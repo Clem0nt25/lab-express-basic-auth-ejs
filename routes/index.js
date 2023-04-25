@@ -1,7 +1,7 @@
 const User = require("../models/User.model");
 const router = require("express").Router();
 const bcryptjs = require("bcryptjs")
-
+const { isLoggedIn, isLoggedOut } = require('../middleware/route-guard.js');
 const pwdRegex = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d@$!%*#?&]{8,}$/
 
 
@@ -14,7 +14,7 @@ router.get("/", (req, res, next) => {
 
 
 /* GET sign up page */
-router.get("/signup", (req, res, next) => {
+router.get("/signup",isLoggedOut, (req, res, next) => {
   res.render("signup");
 });
 
@@ -46,13 +46,15 @@ router.post('/signup', async (req, res, next) => {
 
 
 // log in get route
-router.get("/login", (req, res, next) => {
+router.get("/login", isLoggedOut, (req, res, next) => {
   res.render("login");
 });
 
 
 // post route for log in 
 router.post('/login', async (req, res, next) => {
+
+  console.log('SESSION =====> ', req.session);
 
   try {
     const userfound = await User.findOne({username: req.body.username})
@@ -61,23 +63,43 @@ router.post('/login', async (req, res, next) => {
     if(!!userfound) {
 
       if(bcryptjs.compareSync(req.body.password, userfound.passwordHash)) {
-        res.send("PW correct")
+        
+        req.session.user = { username: userfound.username }
+        res.redirect("signup")
+      } else {
+        res.render('login', { errorMessage: 'Incorrect password.' });
+      } 
 
-      }
-
-
-
-
-
+    } else {
+        res.render('login', { errorMessage: 'Incorrect username.' });
     }
     
   } catch (error) {
+    console.log(error)
     
   }
-
-
-
 })
+
+
+
+
+/* GET home page */
+router.get("/home",isLoggedIn, (req, res, next) => {
+  res.render("home");
+});
+
+
+
+/* GET main page */
+router.get("/main", isLoggedIn , (req, res, next) => {
+  res.render("main", {userInSession: req.session.user});
+});
+
+/* GET private page */
+router.get("/private",isLoggedIn , (req, res, next) => {
+  res.render("private", {userInSession: req.session.user});
+});
+
 
 
 
