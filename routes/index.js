@@ -31,21 +31,56 @@ router.post('/signup', async (req, res, next) => {
         await User.create({ username: req.body.username, passwordHash})
         res.send({username: req.body.username, passwordHash})
       } else {
-        res.render('signup', {
-          errorMessage: 'Password is not strong enough',
-          data: { username: req.body.username },
-        })
+        res.render('signup')
+        console.log("Password not good enough")
       }
     } else {
-      res.render('signup', {
-        errorMessage: 'Username already in use',
-        data: { username: req.body.username },
-      })
+      res.render('signup')
+      console.log('User exists')
     }
   } catch (error) {
     console.log(error)
   }
 })
+
+
+
+// log in get route
+router.get("/login", (req, res, next) => {
+  res.render("login");
+});
+
+
+// post route for log in 
+router.post('/login', async (req, res, next) => {
+
+  try {
+    const userfound = await User.findOne({username: req.body.username})
+    
+    // checking if User queried from DB is not null
+    if(!!userfound) {
+
+      if(bcryptjs.compareSync(req.body.password, userfound.passwordHash)) {
+        res.send("PW correct")
+
+      }
+
+
+
+
+
+    }
+    
+  } catch (error) {
+    
+  }
+
+
+
+})
+
+
+
 
 
 
